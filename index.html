@@ -54,8 +54,12 @@
     .brand:hover .dot { background: var(--secondary); }
     .brand:hover .name::after { width: 100%; }
 
-    main { max-width: 32rem; padding: 1rem 1rem 5rem; padding-top: 21rem; }
-    @media (max-width: 639px) { main { padding-top: 12rem; } }
+    main { max-width: 32rem; padding: 1rem 1rem 5rem; padding-top: 2.5rem; }
+    @media (max-width: 639px) { main { padding-top: 1.5rem; } }
+
+    /* Animación: una idea que se vuelve software (ocupa el espacio sobre la foto) */
+    .idea { margin: 0 0 2rem; width: 100%; }
+    .idea svg { display: block; width: 100%; height: auto; overflow: visible; }
 
     .intro { display: flex; align-items: center; gap: 1.5rem; }
     .intro img {
@@ -86,6 +90,181 @@
     </a>
 
     <main>
+      <!-- IDEA → SOFTWARE: 10 s en bucle. El punto de la marca es el hilo: 1 cae en un cerebro (una idea), 2 el cerebro contacta a
+           Daniel, 3 Daniel ejecuta la plataforma, 4 la plataforma llega a muchas personas, 5 genera dinero; el punto sube y vuelve a caer. -->
+      <figure class="idea" aria-label="Animación: una idea llega a Daniel Talero, que la convierte en una plataforma que usan muchas personas y genera dinero">
+      <svg id="idea" viewBox="0 0 480 300" role="img" aria-hidden="true" font-family="IBM Plex Mono, ui-monospace, monospace">
+        <defs><clipPath id="ideaFace"><circle cx="0" cy="0" r="28"/></clipPath></defs>
+        <g id="ideaBrain" fill="none" stroke="#71717a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M95 88 C80 76 56 80 50 98 C34 100 28 120 38 132 C28 146 36 166 54 168 C58 186 80 194 95 184 C110 194 132 186 136 168 C154 166 162 146 152 132 C162 120 156 100 140 98 C134 80 110 76 95 88"/>
+          <path d="M95 88 C92 110 98 130 94 150 C92 166 96 176 95 184"/>
+          <path d="M58 112 C66 106 76 112 74 122"/><path d="M132 112 C124 106 114 112 116 122"/>
+          <path d="M50 142 C60 136 70 144 66 154"/><path d="M140 142 C130 136 120 144 124 154"/>
+          <path d="M78 160 C84 152 90 158 88 168"/><path d="M112 160 C106 152 100 158 102 168"/>
+        </g>
+        <g id="ideaRays" stroke="#F5C089" stroke-width="2" stroke-linecap="round"></g>
+        <path id="ideaLink" fill="none" stroke="#71717a" stroke-width="1.3" stroke-dasharray="3 5" stroke-linecap="round"/>
+        <g id="ideaWorld">
+          <g id="ideaUsers"></g>
+          <g id="ideaApp">
+            <rect id="ideaFill" x="110" y="50" width="260" height="180" rx="8" fill="#FCFBF8" opacity="0"/>
+            <g id="ideaUI" opacity="0">
+              <circle cx="136" cy="63" r="3.5" fill="#3E8DA7"/><circle cx="148" cy="63" r="3.5" fill="#D6D3CC"/>
+              <g id="ideaSide"></g>
+              <g id="ideaBars"></g>
+              <path id="ideaTrend" fill="none" stroke="#F5C089" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="185" y="175" width="70" height="24" rx="6" fill="#F5C089"/>
+              <g id="ideaRows"></g>
+            </g>
+            <g id="ideaSketch" fill="none" stroke-linecap="round" stroke-linejoin="round"></g>
+          </g>
+          <g id="ideaCoins"></g>
+          <g id="ideaPill" opacity="0">
+            <rect x="214" y="12" width="156" height="28" rx="14" fill="#27272a"/>
+            <text id="ideaPillT" x="292" y="30.5" text-anchor="middle" font-size="12.5" fill="#F5F4F0"></text>
+          </g>
+        </g>
+        <g id="ideaDan" opacity="0">
+          <circle id="ideaDanRing" r="33" fill="none" stroke="#F5C089" stroke-width="2.5"/>
+          <image href="/images/daniel.jpg" x="-28" y="-28" width="56" height="56" clip-path="url(#ideaFace)" preserveAspectRatio="xMidYMid slice" style="mix-blend-mode:multiply"/>
+          <circle r="28" fill="none" stroke="#27272a" stroke-width="1.2"/>
+          <text id="ideaDanName" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="#27272a">Daniel Talero</text>
+        </g>
+        <g id="ideaRings"></g>
+        <circle id="ideaDot" r="6" fill="#F5C089"/>
+        <text id="ideaLabel" x="20" y="296" font-size="15" fill="#71717a"></text>
+      </svg>
+      </figure>
+      <script>
+      (() => {
+        const svg = document.getElementById('idea'); if (!svg) return;
+        const NS = 'http://www.w3.org/2000/svg', LOOP = 10, $ = id => document.getElementById(id);
+        const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+        const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), seg = (t, a, b) => clamp((t - a) / (b - a)), lerp = (a, b, k) => a + (b - a) * k;
+        const ease = k => k * k * (3 - 2 * k), out = k => 1 - Math.pow(1 - k, 3), back = k => { if (k <= 0) return 0; const s = 1.7; k -= 1; return 1 + (s + 1) * k * k * k + s * k * k; };
+        const arc = (p0, p1, h, k) => [lerp(p0[0], p1[0], k), lerp(p0[1], p1[1], k) - h * 4 * k * (1 - k)];
+        const lerp2 = (p, q, k) => [lerp(p[0], q[0], k), lerp(p[1], q[1], k)];
+        const BRAIN = [95, 132], TOP = [95, -14], DAN_A = [330, 132], DAN_B = [56, 140], HEAD_DOT = [124, 63];
+
+        // ---- el cerebro, dibujado a lápiz ----
+        const BP = [...$('ideaBrain').children].map((p, i) => { const L = p.getTotalLength(); p.setAttribute('stroke-dasharray', L); return { p, L, a: i ? .35 + i * .07 : 0, d: i ? .4 : .75 }; });
+        const RAYS = [...Array(6)].map((_, i) => ({ a: -Math.PI / 2 + (i - 2.5) * .5, n: el('line', {}, $('ideaRays')) }));
+        const LINK = [[158, 132], [300, 132]];
+
+        // ---- el boceto de la plataforma: trazos a mano que después se enderezan ----
+        const line = (x0, y0, x1, y1) => { const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / 6)); return [...Array(n + 1)].map((_, i) => [x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n]); };
+        const rect = (x, y, w, h) => [...line(x, y, x + w, y), ...line(x + w, y, x + w, y + h).slice(1), ...line(x + w, y + h, x, y + h).slice(1), ...line(x, y + h, x, y).slice(1)];
+        const STROKES = [rect(110, 50, 260, 180), line(110, 76, 370, 76), line(170, 76, 170, 230), rect(185, 92, 170, 70), rect(185, 175, 70, 24), line(270, 182, 355, 182), line(270, 200, 340, 200)]
+          .map((pts, s) => ({ pts, seed: s * 2.3, row: s >= 5, node: el('path', {}, $('ideaSketch')) }));
+        const TOTAL = STROKES.reduce((a, s) => a + s.pts.length, 0);
+
+        // ---- la interfaz real ----
+        [40, 30, 34, 26, 32].forEach((w, i) => el('rect', { x: 120, y: 90 + i * 18, width: w, height: 7, rx: 3.5, fill: i ? '#E4E1DA' : '#3E8DA7' }, $('ideaSide')));
+        const BARS = [18, 26, 22, 32, 28, 38, 34].map((h, i) => ({ h, x: 196 + i * 22.5, node: el('rect', { x: 196 + i * 22.5, width: 14, rx: 2.5, fill: '#3E8DA7' }, $('ideaBars')) }));
+        const ROWS = [[270, 178, 85], [270, 194, 66], [270, 210, 76]].map(([x, y, w]) => el('rect', { x, y, width: w, height: 7, rx: 3.5, fill: '#E4E1DA' }, $('ideaRows')));
+
+        // ---- las personas a las que llega (a la derecha y abajo) ----
+        const USERS = [[402, 62], [448, 40], [424, 102], [466, 124], [400, 150], [450, 172], [422, 206], [466, 232], [398, 256], [444, 276], [196, 262], [246, 278], [296, 262], [346, 280]]
+          .map(([x, y], i) => { const g = el('g', { opacity: 0 }, $('ideaUsers')), col = ['#3E8DA7', '#F5C089', '#A1A1AA'][i % 3];
+            const to = x > 380 ? [370, clamp(y, 64, 222)] : [clamp(x, 120, 360), 230];
+            el('line', { x1: x, y1: y, x2: to[0], y2: to[1], stroke: '#D6D3CC', 'stroke-width': 1, 'stroke-dasharray': '2 4' }, g);
+            const body = el('g', {}, g); el('circle', { cx: x, cy: y - 4, r: 4.2, fill: col }, body); el('path', { d: `M${x - 7} ${y + 8} C${x - 7} ${y + 1} ${x + 7} ${y + 1} ${x + 7} ${y + 8} Z`, fill: col }, body);
+            const pulse = el('circle', { r: 2.2, opacity: 0 }, g);
+            return { x, y, to, g, body, pulse, t0: 5.8 + i * .09, ph: (i * .37) % 1 }; });
+        const COINS = [...Array(8)].map((_, i) => { const g = el('g', { opacity: 0 }, $('ideaCoins')); el('circle', { r: 6.5, fill: '#F5C089', stroke: '#27272a', 'stroke-width': .8 }, g);
+          el('text', { 'text-anchor': 'middle', y: 3.4, 'font-size': 9, 'font-weight': 700, fill: '#27272a' }, g).textContent = '$'; return { g, x: 196 + (i * 53) % 160, t0: 7.7 + i * .14 }; });
+        const RINGS = [0, 1].map(() => el('circle', { fill: 'none', stroke: '#F5C089', 'stroke-width': 1.5 }, $('ideaRings')));
+        const type = (s, t, a, cps = 20) => s.slice(0, Math.floor(clamp((t - a) * cps, 0, s.length)));
+        const money = n => '$ ' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+        function frame(t) {
+          // 1 · el punto cae en un cerebro y lo enciende (0–2 s)
+          const bOut = ease(seg(t, 3.7, 4.2));
+          BP.forEach(({ p, L, a, d }) => p.setAttribute('stroke-dashoffset', L * (1 - ease(seg(t, a, a + d)))));
+          $('ideaBrain').setAttribute('opacity', 1 - bOut);
+          $('ideaBrain').setAttribute('transform', `translate(95 135) scale(${1 - .12 * bOut}) translate(-95 -135)`);
+          const spark = seg(t, 1.35, 2.2);
+          RAYS.forEach(({ a, n }) => { const r0 = 11 + 4 * spark, r1 = r0 + 9 * Math.sin(spark * Math.PI), on = spark > 0 && spark < 1;
+            n.setAttribute('x1', BRAIN[0] + Math.cos(a) * r0); n.setAttribute('y1', BRAIN[1] + Math.sin(a) * r0); n.setAttribute('x2', BRAIN[0] + Math.cos(a) * r1); n.setAttribute('y2', BRAIN[1] + Math.sin(a) * r1); n.setAttribute('opacity', on ? 1 : 0); });
+          RINGS.forEach((r, i) => { const p = ((t + i * .6) % 1.2) / 1.2, on = t > 1.35 && t < 2.3; r.setAttribute('cx', BRAIN[0]); r.setAttribute('cy', BRAIN[1]); r.setAttribute('r', 6 + p * 15); r.setAttribute('opacity', on ? (1 - p) * .7 : 0); });
+
+          // 2 · el cerebro contacta a Daniel: se tiende una línea y el punto viaja por ella (2–3.8 s)
+          const lk = ease(seg(t, 2.1, 2.6)) * (1 - seg(t, 3.7, 4.1));
+          $('ideaLink').setAttribute('d', lk > 0 ? `M${LINK[0][0]} ${LINK[0][1]} L${lerp(LINK[0][0], LINK[1][0], ease(seg(t, 2.1, 2.6)))} ${LINK[1][1]}` : '');
+          $('ideaLink').setAttribute('opacity', lk);
+          // 3 · Daniel pasa a la izquierda y ejecuta: el punto sale de él como punta de lápiz (3.8–5.7 s)
+          const dm = ease(seg(t, 3.8, 4.4)), dp = lerp2(DAN_A, DAN_B, dm), ds = lerp(1, .8, dm);
+          const arrive = seg(t, 3.15, 3.6);
+          $('ideaDan').setAttribute('opacity', seg(t, 2.2, 2.6) * (1 - seg(t, 9.2, 9.5)));
+          $('ideaDan').setAttribute('transform', `translate(${dp[0]} ${dp[1]}) scale(${ds * (1 + .08 * Math.sin(arrive * Math.PI)) * back(seg(t, 2.2, 2.7)) || 0})`);
+          $('ideaDanRing').setAttribute('opacity', Math.sin(arrive * Math.PI) + .0);
+          $('ideaDanRing').setAttribute('r', 33 + 8 * arrive);
+
+          const drawn = TOTAL * ease(seg(t, 4.6, 5.3)), snap = ease(seg(t, 5.3, 5.8));
+          let used = 0, tip = null;
+          STROKES.forEach(({ pts, seed, row, node }) => {
+            const k = clamp(drawn - used, 0, pts.length); used += pts.length;
+            if (k < 1) { node.setAttribute('d', ''); return; }
+            const amp = 2.4 * (1 - snap), P = pts.slice(0, Math.ceil(k)).map(([x, y], i) => [x + amp * (.8 * Math.sin(i * .38 + seed) + .25 * Math.sin(i * 1.3 + seed * 3)), y + amp * (.8 * Math.sin(i * .31 + seed * 2) + .25 * Math.sin(i * 1.1 + seed))]);
+            if (k < pts.length) tip = P[P.length - 1];
+            node.setAttribute('d', 'M' + P.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L'));
+            node.setAttribute('stroke', snap > .5 ? '#27272a' : '#71717a'); node.setAttribute('stroke-width', 1.4 + .2 * snap);
+            node.setAttribute('opacity', row ? 1 - seg(t, 5.8, 6.1) : 1);
+          });
+          $('ideaFill').setAttribute('opacity', seg(t, 5.35, 5.8));
+          $('ideaUI').setAttribute('opacity', seg(t, 5.6, 5.95));
+          // 5 · genera dinero: las barras suben y aparece la tendencia
+          const rich = ease(seg(t, 7.6, 8.4));
+          BARS.forEach(({ h, node }, i) => { const g = out(seg(t, 5.7 + i * .05, 6.15 + i * .05)), hh = h * g * (1 + .55 * rich * (i / 6)) * (1 + .06 * Math.sin(t * 3 + i) * seg(t, 6.4, 6.8));
+            node.setAttribute('y', 156 - hh); node.setAttribute('height', Math.max(0, hh)); node.setAttribute('fill', rich > .3 && i >= 5 ? '#F5C089' : '#3E8DA7'); });
+          const tr = BARS.map(({ h, x }, i) => [x + 7, Math.max(100, 156 - h * (1 + .55 * (i / 6)) - 6)]), tk = ease(seg(t, 7.8, 8.5));
+          $('ideaTrend').setAttribute('d', tk > 0 ? 'M' + tr.slice(0, Math.max(2, Math.ceil(tk * tr.length))).map(p => p.join(' ')).join(' L') : '');
+          ROWS.forEach((r, i) => r.setAttribute('opacity', seg(t, 5.9 + i * .1, 6.2 + i * .1)));
+
+          // 4 · llega a muchas personas; en 5, por las mismas líneas entra dinero
+          USERS.forEach(({ x, y, to, g, body, pulse, t0, ph }) => { const k = back(seg(t, t0, t0 + .4));
+            g.setAttribute('opacity', seg(t, t0, t0 + .15)); body.setAttribute('transform', `translate(${x} ${y}) scale(${k}) translate(${-x} ${-y})`);
+            const pay = t > 7.6, p = ((t - t0) * .9 + ph) % 1, live = t > t0 + .3;
+            const a = pay ? [x, y] : to, b = pay ? to : [x, y];          // primero la plataforma sale hacia las personas; luego los pagos entran
+            pulse.setAttribute('cx', lerp(a[0], b[0], p)); pulse.setAttribute('cy', lerp(a[1], b[1], p)); pulse.setAttribute('opacity', live ? Math.sin(p * Math.PI) : 0);
+            pulse.setAttribute('fill', pay ? '#F5C089' : '#3E8DA7'); pulse.setAttribute('r', pay ? 3 : 2.2); });
+          COINS.forEach(({ g, x, t0 }) => { const k = seg(t, t0, t0 + 1.1); g.setAttribute('opacity', k > 0 && k < 1 ? Math.sin(k * Math.PI) : 0);
+            g.setAttribute('transform', `translate(${x + 8 * Math.sin(k * 6 + x)} ${lerp(46, 14, out(k))})`); });
+          $('ideaPill').setAttribute('opacity', seg(t, 6.0, 6.3) * (1 - seg(t, 9.2, 9.4)));
+          $('ideaPillT').textContent = t < 7.65 ? Math.round(1248 * out(seg(t, 6.0, 7.5))).toLocaleString('es-CO') + ' usuarios' : money(12480000 * out(seg(t, 7.65, 8.9)));
+          $('ideaPill').setAttribute('transform', t > 7.65 && t < 7.9 ? `translate(292 26) scale(${1 + .08 * Math.sin(seg(t, 7.65, 7.9) * Math.PI)}) translate(-292 -26)` : '');
+
+          // cierre: todo se recoge en el punto, que sube para volver a caer (9.2–10 s)
+          const c = ease(seg(t, 9.2, 9.7));
+          $('ideaWorld').setAttribute('transform', `translate(${HEAD_DOT[0]} ${HEAD_DOT[1]}) scale(${1 - .985 * c}) translate(${-HEAD_DOT[0]} ${-HEAD_DOT[1]})`);
+          $('ideaWorld').setAttribute('opacity', 1 - seg(t, 9.45, 9.7));
+          // el punto: cae → en el cerebro → viaja a Daniel → sale de Daniel → punta del lápiz → primer punto de la plataforma → sube
+          let d;
+          if (t < 1.35) d = t < .75 ? TOP : [BRAIN[0], lerp(TOP[1], BRAIN[1], Math.pow(seg(t, .75, 1.35), 2))];
+          else if (t < 2.65) d = [BRAIN[0], BRAIN[1] - 10 * Math.abs(Math.sin(seg(t, 1.35, 1.75) * Math.PI)) * (1 - seg(t, 1.35, 1.75))];
+          else if (t < 3.2) d = lerp2(LINK[0], LINK[1], ease(seg(t, 2.65, 3.2)));
+          else if (t < 4.3) d = [dp[0] + 20 * ds, dp[1] - 20 * ds];                 // se queda en el hombro de Daniel mientras piensa
+          else if (t < 4.6) d = arc([dp[0] + 20 * ds, dp[1] - 20 * ds], STROKES[0].pts[0], 30, ease(seg(t, 4.3, 4.6)));
+          else if (t < 5.35 && tip) d = tip;
+          else if (t < 5.8) d = arc(STROKES[0].pts[0], HEAD_DOT, 12, ease(seg(t, 5.35, 5.8)));
+          else if (t < 9.6) d = HEAD_DOT;
+          else d = lerp2(HEAD_DOT, TOP, easeIn(seg(t, 9.6, 10)));
+          const r = t < 1.35 ? 6 : t < 2.65 ? 6 + 2 * Math.sin(seg(t, 1.35, 2.0) * Math.PI) : t < 4.6 ? 6 : t < 5.35 ? 4 : t < 9.6 ? lerp(4, 3.5, seg(t, 5.35, 5.8)) : lerp(3.5, 6, seg(t, 9.6, 9.8));
+          $('ideaDot').setAttribute('cx', d[0]); $('ideaDot').setAttribute('cy', d[1]); $('ideaDot').setAttribute('r', r);
+          // el subtítulo, en la misma letra de la página
+          const lab = t < 2.1 ? type('una idea', t, .9) : t < 3.8 ? type('llega a Daniel', t, 2.2) : t < 5.9 ? type('Daniel la construye', t, 3.9) : t < 7.65 ? type('llega a miles', t, 6.0) : t < 9.3 ? type('y genera dinero', t, 7.7) : '';
+          $('ideaLabel').textContent = '> ' + lab + (Math.floor(t * 2) % 2 ? '▍' : ' ');
+        }
+        const easeIn = k => k * k * k;
+        window.ideaFrame = frame;   // para capturas
+        const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (still) { frame(8.9); return; }
+        let visible = true, t0 = performance.now();
+        new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(svg);
+        (function loop(now) { if (visible && !window.ideaHold) frame(((now - t0) / 1000) % LOOP); requestAnimationFrame(loop); })(t0);
+      })();
+      </script>
+
       <div class="intro">
         <img src="/images/daniel.jpg" alt="Daniel Talero" width="64" height="64" draggable="false">
         <div>
